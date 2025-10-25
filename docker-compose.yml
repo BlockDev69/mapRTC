@@ -2,12 +2,26 @@ version: "3.8"
 
 services:
   backend:
-    build: .
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: api_backend
     command: uvicorn main:app --reload --port 8000 --host=0.0.0.0
     env_file:
-      - .env
+      - ./backend/.env
     ports:
       - "8000:8000"
     volumes:
-      - ./:/app
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: web_frontend
+    ports:
+      - "3000:8080"
+    # volumes:
+    #   - ./frontend:/app:ro
+    depends_on:
+      - backend
