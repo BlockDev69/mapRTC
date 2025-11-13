@@ -1,30 +1,67 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
+  <h1>Hello {{ firstName }}</h1>
+  <h3>{{ homeData ? homeData.details : 'chargement...' }}</h3>
+  <p>Compteur: {{ count }}</p>
   <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+    <button @click="increment">Incrementer</button>
+    <button @click="decrement">Decrementer</button>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+<script setup>
+import { ref, onMounted } from 'vue';
+
+const firstName = ref("Marie")
+
+setInterval(() => {
+  if (firstName.value === 'Marie') {
+    firstName.value = 'Sammy';
+  } else {
+    firstName.value = 'Marie';
+  }
+}, 1000);
+
+const count = ref(0)
+const increment = (event) => {
+  console.log(event)
+  count.value++
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+const decrement = () => {
+  count.value--
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+const homeData = ref(null)
+
+const fetchdta = async() => {
+  try {
+    let baseURL = "http://localhost:8000"
+    let response = await fetch(`${baseURL}/home`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    if (!response.ok) {
+      const text = await response.text()
+      throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
+    }
+    let data = await response.json()
+    console.log(data)
+    return data
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  }
+};
+onMounted(async() => {
+  homeData.value = await fetchdta()
+})
+
+</script>
+
+<style>
+h1 {
+  color: rgba(255, 162, 0, 0.66);
 }
 </style>

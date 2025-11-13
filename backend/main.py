@@ -1,8 +1,17 @@
 from fastapi import FastAPI
-from os import environ as env
+from fastapi.middleware.cors import CORSMiddleware
+from router import home
 
 app = FastAPI()
 
-@app.get("/")
-def read_root():
-    return {"details": f"Hello, World from mapRTC={env.get('MY_VARIABLE', 'default-value')}"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173",
+                   "http://localhost:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(home.router)
