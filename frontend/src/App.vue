@@ -1,61 +1,76 @@
 <template>
   <h1>Hello {{ firstName }}</h1>
   <h3>{{ homeData ? homeData.details : 'chargement...' }}</h3>
-  <p>Compteur: {{ count }}</p>
+  <p>Session state: <strong>{{  status  }}</strong></p>
+  <p v-if="userId">UserID: {{ userId }}</p>
   <div>
-    <button @click="increment">Incrementer</button>
-    <button @click="decrement">Decrementer</button>
+    <button @click="checkSession" :disabled="!userId">
+      Check Session
+    </button>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+})
 
 const firstName = ref("Marie")
 
 setInterval(() => {
-  if (firstName.value === 'Marie') {
-    firstName.value = 'Sammy';
-  } else {
-    firstName.value = 'Marie';
-  }
-}, 1000);
-
-const count = ref(0)
-const increment = (event) => {
-  console.log(event)
-  count.value++
-}
-
-const decrement = () => {
-  count.value--
-}
+  firstName.value = firstName.value === 'Marie' ? 'Sammy' : 'Marie'
+}, 1000)
 
 const homeData = ref(null)
 
-const fetchdta = async() => {
+const fetchHomeData = async () => {
   try {
-    let baseURL = "http://localhost:8000"
-    let response = await fetch(`${baseURL}/home`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    })
-    if (!response.ok) {
-      const text = await response.text()
-      throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
-    }
-    let data = await response.json()
-    console.log(data)
-    return data
-  } catch (error) {
-    console.error("Error fetching data:", error)
+    const response = await api.get('/home')
+    console.log(response.data)
+    return response.data
+  } catch (err) {
+    console.error('Error fetching data:', err)
+    return null
   }
-};
-onMounted(async() => {
-  homeData.value = await fetchdta()
+}
+
+const userId = ref(null)
+const status = ref('Not logged in')
+
+const initSession = async () => {
+  try {
+    const response = await api.post('/session/init')
+    userId.value = response.data.user_id
+    status.value = response.data.status === 'created' ? 'Session created' : 'Session exists'
+    console.log("Session data:", response.data)
+  } catch (error) {
+    console.error('Error initializing session:', error)
+    status.value = 'Error initializing session'
+  }
+}
+
+const checkSession = async () => {
+  try {
+    console.log("Cookies:", document.cookie)
+    const response = await api.get('/session/me')
+    console.log("Session data:", response.data)
+    alert(`User ID: ${response.data.user_id}\nAnonymous: ${response.data.is_anonymous}`)
+  } catch (error) {
+    console.error('Error checking session:', error)
+    alert("Session invalid or expired")
+  }
+}
+
+onMounted(async () => {
+  homeData.value = await fetchHomeData()
+  await initSession()
 })
 
 </script>
