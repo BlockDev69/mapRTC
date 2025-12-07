@@ -41,12 +41,12 @@ async def get_session_data(
 @router.post("/clear")
 async def clear_session(
     reponse: Response,
-    session_id: UUID = Depends(auth.verifier)
+    session_data: Session = Depends(auth.verifier)
 ):
-    if not session_id:
+    if not session_data:
         return {"status": "No session to clear"}
     
-    await auth.backend.delete(session_id)
+    await auth.backend.delete(session_data.user_id)
     auth.cookie_handler.delete_from_response(reponse)
 
     return {"status": "Session cleared"}
